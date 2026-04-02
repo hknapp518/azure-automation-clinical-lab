@@ -62,3 +62,9 @@ resource bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' = 
   }
 }
 After this, you can RDP into your VM directly from the Azure Portal via Bastion—no NSG inbound rule for your public IP needed.
+
+4. Key Vault Issue: Initially, attempts to set a VM password secret failed with Forbidden because the current user/service principal did not have permission to write secrets.
+
+How We Fixed It: We checked the correct Azure AD Object ID for the user, then assigned an access policy on the Key Vault granting get, set, list, and delete permissions for secrets. After propagation, we could successfully store the VM password securely.
+
+Lesson Learned: Always verify Key Vault access policies and object IDs before trying to store secrets; propagation may take a few minutes, and hardcoding secrets should be avoided in production.
