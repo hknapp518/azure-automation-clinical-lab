@@ -10,3 +10,55 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
 param storageAccountName string = 'clinical${substring(uniqueString(resourceGroup().id), 0, 8)}'
 Explanation= It creates a storage account name that starts with clinical and appends the first 8 characters of a unique, 
 deterministic string based on the resource group ID, ensuring the name is unique, lowercase, and valid for Azure.
+
+3. For my NSG I just added my home public IP address but for production enviroment 
+
+//deploy a public IP for Bastion
+
+resource bastionPublicIP 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
+  name: 'pip-bastion-clinical'
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    idleTimeoutInMinutes: 4
+  }
+}
+
+//Deploy Azure Bastion host
+
+resource bastion 'Microsoft.Network/bastionHosts@2023-05-01' = {
+  name: 'bastion-clinical'
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'bastion-ipconfig'
+        properties: {
+          subnet: {
+            id: '${vnet.id}/subnets/AzureBastionSubnet'  // Must be named exactly this
+          }
+          publicIPAddress: {
+            id: bastionPublicIP.id
+          }
+        }
+      }
+    ]
+  }
+}
+
+\\create a subnect named "AzureBastionSubnet" in your VNet, minimum /27 size
+
+resource bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' = {
+  name: 'AzureBastionSubnet'
+  parent: vnet
+  properties: {
+    addressPrefix: '10.0.2.0/27'  // Example subnet, adjust to your VNet
+  }
+}
+After this, you can RDP into your VM directly from the Azure Portal via Bastion—no NSG inbound rule for your public IP needed.
