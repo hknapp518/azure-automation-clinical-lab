@@ -1,10 +1,7 @@
 param location string = 'eastus'
-param resourceGroupName string = 'rg-clinical-lab'
 
 param vnetName string = 'vnet-clinical'
 param subnetName string = 'subnet-clinical'
-
-param storageAccountName string = 'clinicalstoragehknapp01'
 
 resource vnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   name: vnetName
@@ -15,36 +12,17 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
         '10.0.0.0/16'
       ]
     }
-   subnets: [
-  {
-    name: subnetName
-    properties: {
-      addressPrefix: '10.0.1.0/24'
-      networkSecurityGroup: {
-        id: nsg.id
-      }
-    }
-  }
-]
-
-resource storage 'Microsoft.Storage/storageAccounts@2023-01-01' = {
-  name: storageAccountName
-  location: location
-  sku: {
-    name: 'Standard_LRS'
-  }
-  kind: 'StorageV2'
-  properties: {
-    supportsHttpsTrafficOnly: true
-    minimumTlsVersion: 'TLS1_2'
-    encryption: {
-      services: {
-        blob: {
-          enabled: true
+    subnets: [
+      {
+        name: subnetName
+        properties: {
+          addressPrefix: '10.0.1.0/24'
+          networkSecurityGroup: {
+            id: nsg.id
+          }
         }
       }
-      keySource: 'Microsoft.Storage'
-    }
+    ]
   }
 }
 
@@ -73,6 +51,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-05-01' = {
 
 param vmName string = 'clinical-vm'
 param adminUsername string
+@secure()
 param adminPassword string
 
 resource nic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
@@ -84,7 +63,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
         name: 'ipconfig1'
         properties: {
           subnet: {
-            id: subnet.id
+            id: '${vnet.id}/subnets/${subnetName}'
           }
           privateIPAllocationMethod: 'Dynamic'
         }
@@ -98,7 +77,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-03-01' = {
   location: resourceGroup().location
   properties: {
     hardwareProfile: {
-      vmSize: 'Standard_B2s'
+      vmSize: 'Standard_D2s_v3'
     }
     osProfile: {
       computerName: vmName
@@ -129,9 +108,9 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-03-01' = {
   }
 }
 
-param storageAccountName string = 'clinicaldata${uniqueString(resourceGroup().id)}'
+param storageAccountName string = 'clinical${substring(uniqueString(resourceGroup().id), 0, 8)}'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2023-06-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageAccountName
   location: resourceGroup().location
   sku: {
@@ -141,7 +120,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-06-01' = {
   properties: {
     minimumTlsVersion: 'TLS1_2'
     allowBlobPublicAccess: false
-    enableHttpsTrafficOnly: true
     encryption: {
       services: {
         blob: {
@@ -154,8 +132,14 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-06-01' = {
   }
 }
 
-resource blobContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-06-01' = {
+resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-05-01' = {
   parent: storageAccount
+  name: 'default'
+  properties: {}
+}
+
+resource blobContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobServices
   name: 'patient-records'
   properties: {
     publicAccess: 'None'
