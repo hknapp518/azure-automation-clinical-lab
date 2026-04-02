@@ -1,0 +1,12 @@
+1. Errors in Bicep code
+
+APIs versioning that did not support the current versioning in storage and blob accounts. Switched from Jun to Apr.
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-06-01' = { to this 
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+
+
+
+2. Storaage account name is invalid had over 24 characters.
+param storageAccountName string = 'clinical${substring(uniqueString(resourceGroup().id), 0, 8)}'
+Explanation= It creates a storage account name that starts with clinical and appends the first 8 characters of a unique, 
+deterministic string based on the resource group ID, ensuring the name is unique, lowercase, and valid for Azure.
