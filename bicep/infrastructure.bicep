@@ -1,5 +1,12 @@
-param location string = 'eastus'
+// Main Infrastructure Template
+// Deploys:
+//   - VNet
+//   - Subnet
+//   - NSG
+//   - Storage Account + Blob Service + Container
 
+
+param location string = 'eastus'
 param vnetName string = 'vnet-clinical'
 param subnetName string = 'subnet-clinical'
 
@@ -41,70 +48,11 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-05-01' = {
           protocol: 'Tcp'
           sourcePortRange: '*'
           destinationPortRange: '3389'
-          sourceAddressPrefix: '*'
+          sourceAddressPrefix: '24.73.12.194/32'
           destinationAddressPrefix: '*'
         }
       }
     ]
-  }
-}
-
-param vmName string = 'clinical-vm'
-param adminUsername string
-@secure()
-param adminPassword string
-
-resource nic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
-  name: '${vmName}-nic'
-  location: resourceGroup().location
-  properties: {
-    ipConfigurations: [
-      {
-        name: 'ipconfig1'
-        properties: {
-          subnet: {
-            id: '${vnet.id}/subnets/${subnetName}'
-          }
-          privateIPAllocationMethod: 'Dynamic'
-        }
-      }
-    ]
-  }
-}
-
-resource vm 'Microsoft.Compute/virtualMachines@2023-03-01' = {
-  name: vmName
-  location: resourceGroup().location
-  properties: {
-    hardwareProfile: {
-      vmSize: 'Standard_D2s_v3'
-    }
-    osProfile: {
-      computerName: vmName
-      adminUsername: adminUsername
-      adminPassword: adminPassword
-    }
-    storageProfile: {
-      imageReference: {
-        publisher: 'MicrosoftWindowsServer'
-        offer: 'WindowsServer'
-        sku: '2022-Datacenter'
-        version: 'latest'
-      }
-      osDisk: {
-        createOption: 'FromImage'
-        managedDisk: {
-          storageAccountType: 'Standard_LRS'
-        }
-      }
-    }
-    networkProfile: {
-      networkInterfaces: [
-        {
-          id: nic.id
-        }
-      ]
-    }
   }
 }
 
@@ -143,5 +91,20 @@ resource blobContainer 'Microsoft.Storage/storageAccounts/blobServices/container
   name: 'patient-records'
   properties: {
     publicAccess: 'None'
+  }
+}
+
+
+resource kv 'Microsoft.KeyVault/vaults@2023-02-01' existing = {
+  name: 'kv-clinical-harrison518'
+}
+
+module vmModule 'vm.bicep' = {
+  name: 'deployVM'
+  params: {
+    vmName: 'clinical-vm'
+    adminUsername: 'HarrisonAdmin'
+    adminPassword: kv.getSecret('VmAdminPassword')
+    subnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, subnetName)
   }
 }
