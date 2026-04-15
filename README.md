@@ -16,7 +16,7 @@ Clinical research organizations often struggle with:
 This lab addresses these challenges by:
 - Deploying a secure Azure infrastructure (VMs, VNets, NSGs) for clinical workflows using Bicep
 - Implemented a Zero Trust identity and access management model in Microsoft Entra ID, including role-based user segmentation, Conditional Access policies enforcing MFA, and validation of authentication and policy enforcement through sign-in log analysis.
-- Using Microsoft Purview to automatically tag and classify sensitive patient data
+- Implemented Microsoft Purview data classification policies to automatically identify and label sensitive clinical and personal data, supporting compliance and governance controls across the Azure environment.
 - Creating encrypted storage (Blob Storage / Azure Files) with TLS in transit and encryption at rest
 - Integrating ShareFile folders for secure collaboration with partner hospitals
 - Monitoring the environment using Azure Monitor and Microsoft Defender for Cloud
