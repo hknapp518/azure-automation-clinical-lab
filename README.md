@@ -23,15 +23,26 @@ This lab addresses these challenges by:
 
 
 ## Architecture / Workflow
-![Architecture Diagram](./docs/architecture-diagram.png)
+This architecture implements a Zero Trust clinical trial environment on Azure with layered security controls.
+<img width="5149" height="919" alt="mermaid-diagram" src="https://github.com/user-attachments/assets/b8425277-a070-47e5-8057-db9103d3f02b" />
 
-The architecture includes:
-1. Segmented Azure subnets with NSGs for network security
-2. Windows VMs deployed via Bicep modules
-3. Encrypted Blob Storage / File Shares for clinical data
-4. RBAC enforcement for multiple clinical roles
-5. Integration with ShareFile for secure external collaboration
-6. Monitoring and alerting via Microsoft Defender and Azure Monitor
+
+
+### Data Flow
+
+Users → Microsoft Entra ID (RBAC + MFA via Conditional Access) → Azure Virtual Network (segmented with NSGs) → Windows VM (clinical workload) → Azure Blob Storage (encrypted patient data)
+
+
+### Security & Governance Layers
+
+- Azure Key Vault → Secures secrets and credentials (no hardcoding)  
+- Microsoft Purview → Classifies and labels sensitive data (PHI/PII)  
+- Azure Monitor + Microsoft Defender for Cloud → Provides monitoring, logging, and threat detection  
+
+
+### Design Principle
+
+The design follows a defense-in-depth model, where identity, network, compute, and data layers each enforce independent security controls.
 
 ## Challenges & Learnings
 - Designing a multi-role secure environment while ensuring compliance with HIPAA and NIST standards
