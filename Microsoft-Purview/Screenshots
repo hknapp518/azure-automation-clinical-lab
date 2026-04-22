@@ -1,2 +1,0 @@
-
-The Financial auto-labeling rule uses OR-based logic across multiple financial Sensitive Information Types including credit cards, SWIFT codes, IBANs, and bank account numbers to ensure broad coverage of financial data patterns.
